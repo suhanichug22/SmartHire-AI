@@ -8,53 +8,72 @@ function Notifications() {
     const [loading, setLoading] = useState(true);
 
     const user = JSON.parse(
-        localStorage.getItem("user")
+        localStorage.getItem("user") || "null"
     );
 
     const userId = user?._id || user?.id;
 
-    useEffect(() => {
 
-        if (userId) {
-            fetchNotifications();
-        } else {
-            setLoading(false);
-        }
-
-    }, [userId]);
+    // ==========================================
+    // Fetch Notifications
+    // ==========================================
 
     const fetchNotifications = async () => {
 
+        if (!userId) {
+            setLoading(false);
+            return;
+        }
+
         try {
 
-            const res = await axios.get(
+            console.log("🔔 Logged in User:", user);
+            console.log("🔔 User ID:", userId);
+            console.log("🔔 Role:", user?.role);
+
+            const response = await axios.get(
                 `http://localhost:5000/api/notifications/${userId}`
             );
 
-            console.log("🔔 Notifications:", res.data);
-
-            setNotifications(
-                res.data.notifications || []
+            console.log(
+                "🔔 Notification Response:",
+                response.data
             );
 
-        }
+            setNotifications(
+                response.data.notifications || []
+            );
 
-        catch (error) {
+        } catch (error) {
 
             console.log(
-                "Notification Error:",
+                "❌ Notification Error:",
                 error.response?.data || error.message
             );
 
-        }
-
-        finally {
+        } finally {
 
             setLoading(false);
 
         }
 
     };
+
+
+    // ==========================================
+    // Load Notifications
+    // ==========================================
+
+    useEffect(() => {
+
+        fetchNotifications();
+
+    }, [userId]);
+
+
+    // ==========================================
+    // Mark Notification Read
+    // ==========================================
 
     const markAsRead = async (id) => {
 
@@ -64,14 +83,21 @@ function Notifications() {
                 `http://localhost:5000/api/notifications/read/${id}`
             );
 
-            fetchNotifications();
+            setNotifications(
+                notifications.map(notification =>
+                    notification._id === id
+                        ? {
+                            ...notification,
+                            isRead: true
+                        }
+                        : notification
+                )
+            );
 
-        }
-
-        catch (error) {
+        } catch (error) {
 
             console.log(
-                "Mark Read Error:",
+                "❌ Mark Read Error:",
                 error.response?.data || error.message
             );
 
@@ -79,21 +105,39 @@ function Notifications() {
 
     };
 
+
+    // ==========================================
+    // Loading
+    // ==========================================
+
     if (loading) {
 
         return (
 
             <div className="min-h-screen bg-black text-white flex items-center justify-center">
 
-                <h1 className="text-3xl animate-pulse">
-                    Loading Notifications 🔔
-                </h1>
+                <div className="text-center">
+
+                    <div className="text-5xl mb-4">
+                        🔔
+                    </div>
+
+                    <h1 className="text-2xl font-semibold">
+                        Loading Notifications...
+                    </h1>
+
+                </div>
 
             </div>
 
         );
 
     }
+
+
+    // ==========================================
+    // User Not Logged In
+    // ==========================================
 
     if (!userId) {
 
@@ -101,9 +145,17 @@ function Notifications() {
 
             <div className="min-h-screen bg-black text-white flex items-center justify-center">
 
-                <h1 className="text-2xl">
-                    Please login first 🔐
-                </h1>
+                <div className="text-center">
+
+                    <div className="text-5xl mb-4">
+                        🔐
+                    </div>
+
+                    <h1 className="text-2xl font-semibold">
+                        Please login first
+                    </h1>
+
+                </div>
 
             </div>
 
@@ -111,44 +163,83 @@ function Notifications() {
 
     }
 
+
+    // ==========================================
+    // UI
+    // ==========================================
+
     return (
 
-        <div className="min-h-screen bg-black text-white p-10">
+        <div className="min-h-screen bg-black text-white p-6 md:p-10">
 
             <div className="max-w-5xl mx-auto">
 
-                <motion.h1
+
+                {/* Header */}
+
+                <motion.div
                     initial={{
                         opacity: 0,
-                        y: -30
+                        y: -20
                     }}
                     animate={{
                         opacity: 1,
                         y: 0
                     }}
-                    className="text-5xl font-bold mb-10"
+                    className="mb-10"
                 >
-                    🔔 Notifications
-                </motion.h1>
 
+                    <h1 className="text-4xl md:text-5xl font-bold">
+
+                        🔔 Notifications
+
+                    </h1>
+
+                    <p className="text-gray-400 mt-2">
+
+                        Stay updated with your latest activities.
+
+                    </p>
+
+                </motion.div>
+
+
+
+                {/* No Notifications */}
 
                 {notifications.length === 0 ? (
 
-                    <div className="bg-zinc-900 border border-white/10 rounded-3xl p-12 text-center">
+                    <motion.div
+                        initial={{
+                            opacity: 0,
+                            scale: 0.95
+                        }}
+                        animate={{
+                            opacity: 1,
+                            scale: 1
+                        }}
+                        className="bg-zinc-900 border border-white/10 rounded-2xl p-12 text-center"
+                    >
 
-                        <h2 className="text-3xl font-bold">
-                            No Notifications Yet 🚀
+                        <div className="text-6xl mb-5">
+                            🔔
+                        </div>
+
+                        <h2 className="text-2xl font-bold">
+                            No Notifications Yet
                         </h2>
 
-                        <p className="text-gray-400 mt-3">
-                            Your application updates will appear here.
+                        <p className="text-gray-400 mt-2">
+                            New application updates will appear here.
                         </p>
 
-                    </div>
+                    </motion.div>
 
                 ) : (
 
-                    <div className="space-y-5">
+                    /* Notifications List */
+
+                    <div className="space-y-4">
 
                         {notifications.map(
                             (notification, index) => (
@@ -158,47 +249,84 @@ function Notifications() {
 
                                     initial={{
                                         opacity: 0,
-                                        x: -30
+                                        y: 15
                                     }}
 
                                     animate={{
                                         opacity: 1,
-                                        x: 0
+                                        y: 0
                                     }}
 
                                     transition={{
-                                        delay: index * 0.1
+                                        delay: index * 0.08
                                     }}
 
-                                    className={`rounded-2xl p-6 border ${
-                                        notification.isRead
-                                            ? "bg-zinc-900 border-zinc-800"
-                                            : "bg-purple-900/30 border-purple-500/40"
-                                    }`}
+                                    className={`
+                                        rounded-2xl
+                                        p-6
+                                        border
+                                        transition
+                                        ${
+                                            notification.isRead
+                                                ? "bg-zinc-900 border-zinc-800"
+                                                : "bg-purple-900/20 border-purple-500/40"
+                                        }
+                                    `}
                                 >
 
-                                    <div className="flex justify-between items-start gap-5">
+                                    <div className="flex flex-col md:flex-row justify-between gap-5">
 
-                                        <div>
 
-                                            <h2 className="text-2xl font-bold text-purple-400">
-                                                {notification.title}
-                                            </h2>
+                                        {/* Notification Content */}
 
-                                            <p className="text-gray-300 mt-3">
-                                                {notification.message}
-                                            </p>
+                                        <div className="flex gap-4">
 
-                                            <p className="text-gray-500 text-sm mt-4">
-                                                {notification.createdAt
-                                                    ? new Date(
-                                                        notification.createdAt
-                                                    ).toLocaleString()
-                                                    : ""}
-                                            </p>
+                                            <div className="text-3xl">
+                                                {notification.type === "Application"
+                                                    ? "📩"
+                                                    : notification.type === "Accepted"
+                                                    ? "🎉"
+                                                    : notification.type === "Rejected"
+                                                    ? "❌"
+                                                    : "🔔"
+                                                }
+                                            </div>
+
+
+                                            <div>
+
+                                                <h2 className="text-xl font-semibold text-purple-400">
+
+                                                    {notification.title}
+
+                                                </h2>
+
+
+                                                <p className="text-gray-300 mt-2">
+
+                                                    {notification.message}
+
+                                                </p>
+
+
+                                                <p className="text-gray-500 text-sm mt-3">
+
+                                                    {notification.createdAt
+                                                        ? new Date(
+                                                            notification.createdAt
+                                                        ).toLocaleString()
+                                                        : ""
+                                                    }
+
+                                                </p>
+
+                                            </div>
 
                                         </div>
 
+
+
+                                        {/* Mark Read */}
 
                                         {!notification.isRead && (
 
@@ -209,9 +337,11 @@ function Notifications() {
                                                     )
                                                 }
 
-                                                className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-xl whitespace-nowrap"
+                                                className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg h-fit"
                                             >
+
                                                 Mark as Read
+
                                             </button>
 
                                         )}
