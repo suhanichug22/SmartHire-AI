@@ -54,7 +54,7 @@ function Jobs() {
 
       // Get all jobs
       const jobsRes = await axios.get(
-        "http://localhost:5000/api/jobs"
+        "https://smarthire-ai-vm20.onrender.com/api/jobs"
       );
 
       setJobs(jobsRes.data);
@@ -66,7 +66,7 @@ function Jobs() {
         try {
 
           const appliedRes = await axios.get(
-            `http://localhost:5000/api/applications/applied/${userId}`
+            `https://smarthire-ai-vm20.onrender.com/api/applications/applied/${userId}`
           );
 
           setAppliedJobIds(
@@ -134,7 +134,7 @@ function Jobs() {
 
 
       const res = await axios.post(
-        "http://localhost:5000/api/applications/apply",
+        "https://smarthire-ai-vm20.onrender.com/api/applications/apply",
         {
           userId,
           jobId

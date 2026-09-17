@@ -30,7 +30,7 @@ function MyApplications() {
             const userId = user._id || user.id;
 
             const res = await axios.get(
-                `http://localhost:5000/api/applications/my/${userId}`
+                `https://smarthire-ai-vm20.onrender.com/api/applications/my/${userId}`
             );
 
             console.log(
@@ -85,7 +85,7 @@ function MyApplications() {
         try {
 
             await axios.delete(
-                `http://localhost:5000/api/applications/delete/${id}`
+                `https://smarthire-ai-vm20.onrender.com/api/applications/delete/${id}`
             );
 
             alert(

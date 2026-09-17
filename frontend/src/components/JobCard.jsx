@@ -24,7 +24,7 @@ function JobCard({job}){
 
             const res = await axios.post(
 
-                "http://localhost:5000/api/applications/apply",
+                "https://smarthire-ai-vm20.onrender.com/api/applications/apply",
 
                 {
                     userId:user.id,

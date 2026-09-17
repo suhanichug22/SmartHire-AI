@@ -19,7 +19,7 @@ function Applicants() {
       setLoading(true);
 
       const res = await axios.get(
-        `http://localhost:5000/api/applications/job/${jobId}`
+        `https://smarthire-ai-vm20.onrender.com/api/applications/job/${jobId}`
       );
 
       console.log("✅ Applicants:", res.data);
@@ -56,7 +56,7 @@ function Applicants() {
       console.log("Updating:", id, status);
 
       const res = await axios.put(
-        `http://localhost:5000/api/applications/update/${id}`,
+        `https://smarthire-ai-vm20.onrender.com/api/applications/update/${id}`,
         {
           status,
         }
@@ -238,7 +238,7 @@ function Applicants() {
 
                 {app.resume && (
                   <a
-                    href={`http://localhost:5000/${app.resume}`}
+                    href={`https://smarthire-ai-vm20.onrender.com/${app.resume}`}
                     target="_blank"
                     rel="noreferrer"
                     className="block mt-6 text-purple-400 hover:text-purple-300 underline"

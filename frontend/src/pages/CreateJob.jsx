@@ -88,7 +88,7 @@ recruiterId:user.id
 
 const res = await axios.post(
 
-"http://localhost:5000/api/jobs/create",
+"https://smarthire-ai-vm20.onrender.com/api/jobs/create",
 
 data
 

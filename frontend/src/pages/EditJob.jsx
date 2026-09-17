@@ -26,7 +26,7 @@ function EditJob() {
 
             const res = await axios.get(
 
-                `http://localhost:5000/api/jobs/${jobId}`
+                `https://smarthire-ai-vm20.onrender.com/api/jobs/${jobId}`
 
             );
 
@@ -59,7 +59,7 @@ function EditJob() {
 
             await axios.put(
 
-                `http://localhost:5000/api/jobs/update/${jobId}`,
+                `https://smarthire-ai-vm20.onrender.com/api/jobs/update/${jobId}`,
 
                 {
 

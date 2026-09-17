@@ -43,7 +43,7 @@ function RecommendedJobs() {
                 }
 
                 const res = await axios.get(
-                    `http://localhost:5000/api/recommendations/${userId}`
+                    `https://smarthire-ai-vm20.onrender.com/api/recommendations/${userId}`
                 );
 
                 console.log(
@@ -93,7 +93,7 @@ function RecommendedJobs() {
 
             const res = await axios.post(
 
-                "http://localhost:5000/api/applications/apply",
+                "https://smarthire-ai-vm20.onrender.com/api/applications/apply",
 
                 {
                     userId,

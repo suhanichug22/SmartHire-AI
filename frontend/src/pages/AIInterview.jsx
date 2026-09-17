@@ -92,7 +92,7 @@ function AIInterview() {
 
                 const res =
                     await axios.get(
-                        `http://localhost:5000/api/interview/${id}`
+                        `https://smarthire-ai-vm20.onrender.com/api/interview/${id}`
                     );
 
 
@@ -590,7 +590,7 @@ function AIInterview() {
             const res =
                 await axios.put(
 
-                    `http://localhost:5000/api/interview/answer/${id}`,
+                    `https://smarthire-ai-vm20.onrender.com/api/interview/answer/${id}`,
 
                     {
                         questionIndex:
@@ -642,7 +642,7 @@ function AIInterview() {
                     const completeResponse =
                         await axios.put(
 
-                            `http://localhost:5000/api/interview/complete/${id}`
+                            `https://smarthire-ai-vm20.onrender.com/api/interview/complete/${id}`
 
                         );
 

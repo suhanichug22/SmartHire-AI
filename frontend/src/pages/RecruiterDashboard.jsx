@@ -123,7 +123,7 @@ function RecruiterDashboard() {
 
 
       const res = await axios.get(
-        `http://localhost:5000/api/jobs/recruiter/${recruiterId}`
+        `https://smarthire-ai-vm20.onrender.com/api/jobs/recruiter/${recruiterId}`
       );
 
 
@@ -185,7 +185,7 @@ function RecruiterDashboard() {
 
 
       const res = await axios.get(
-        `http://localhost:5000/api/applications/stats/${recruiterId}`
+        `https://smarthire-ai-vm20.onrender.com/api/applications/stats/${recruiterId}`
       );
 
 
@@ -263,7 +263,7 @@ function RecruiterDashboard() {
 
 
       await axios.delete(
-        `http://localhost:5000/api/jobs/delete/${id}`
+        `https://smarthire-ai-vm20.onrender.com/api/jobs/delete/${id}`
       );
 
 
@@ -311,7 +311,7 @@ function RecruiterDashboard() {
 
 
       await axios.put(
-        `http://localhost:5000/api/jobs/toggle-status/${id}`
+        `https://smarthire-ai-vm20.onrender.com/api/jobs/toggle-status/${id}`
       );
 
 

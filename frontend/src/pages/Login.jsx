@@ -36,7 +36,7 @@ function Login() {
 //Axios ek HTTP client library hai, jiska use frontend se backend API ko HTTP requests bhejne ke liye kiya hai.
 //Axios ke through backend ke login API ko POST request bheji jaati hai aur formData backend ko send hota hai.     
 const response = await axios.post(
-        "http://localhost:5000/api/auth/login",
+        "https://smarthire-ai-vm20.onrender.com/api/auth/login",
         formData
       );
 

@@ -152,7 +152,7 @@ function ResumeUpload() {
             const res =
                 await axios.post(
 
-                    "http://localhost:5000/api/resume/upload",
+                    "https://smarthire-ai-vm20.onrender.com/api/resume/upload",
 
                     formData,
 

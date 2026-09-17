@@ -58,7 +58,7 @@ function CandidateProfile() {
       }
 
       const res = await axios.get(
-        `http://localhost:5000/api/users/profile/${userId}`
+        `https://smarthire-ai-vm20.onrender.com/api/users/profile/${userId}`
       );
 
       console.log("✅ Profile Response:", res.data);
@@ -135,7 +135,7 @@ function CandidateProfile() {
       console.log("📝 Updating Profile:", updatedData);
 
       const res = await axios.put(
-        `http://localhost:5000/api/users/profile/${userId}`,
+        `https://smarthire-ai-vm20.onrender.com/api/users/profile/${userId}`,
         updatedData
       );
 

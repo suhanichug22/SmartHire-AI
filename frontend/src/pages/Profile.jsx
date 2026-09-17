@@ -23,7 +23,7 @@ function Profile() {
         const user = JSON.parse(localStorage.getItem("user"));
 
         axios
-            .get(`http://localhost:5000/api/users/${user.id}`)
+            .get(`https://smarthire-ai-vm20.onrender.com/api/users/${user.id}`)
             .then((res) => {
 
                 setProfile(res.data);
@@ -54,7 +54,7 @@ function Profile() {
 
             const res = await axios.put(
 
-                `http://localhost:5000/api/users/update/${user.id}`,
+                `https://smarthire-ai-vm20.onrender.com/api/users/update/${user.id}`,
 
                 {
 

@@ -33,7 +33,7 @@ function ResumeAnalysis(){
 
         axios.get(
 
-            `http://localhost:5000/api/resume/analyze/${resumeId}`
+            `https://smarthire-ai-vm20.onrender.com/api/resume/analyze/${resumeId}`
 
         )
 

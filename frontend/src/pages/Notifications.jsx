@@ -32,7 +32,7 @@ function Notifications() {
             console.log("🔔 Role:", user?.role);
 
             const response = await axios.get(
-                `http://localhost:5000/api/notifications/${userId}`
+                `https://smarthire-ai-vm20.onrender.com/api/notifications/${userId}`
             );
 
             console.log(
@@ -80,7 +80,7 @@ function Notifications() {
         try {
 
             await axios.put(
-                `http://localhost:5000/api/notifications/read/${id}`
+                `https://smarthire-ai-vm20.onrender.com/api/notifications/read/${id}`
             );
 
             setNotifications(

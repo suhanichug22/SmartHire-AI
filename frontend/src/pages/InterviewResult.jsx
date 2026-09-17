@@ -20,7 +20,7 @@ function InterviewResult() {
                 console.log("📊 Fetching Interview Result:", id);
 
                 const res = await axios.get(
-                    `http://localhost:5000/api/interview/${id}`
+                    `https://smarthire-ai-vm20.onrender.com/api/interview/${id}`
                 );
 
                 console.log(

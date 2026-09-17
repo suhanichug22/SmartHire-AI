@@ -42,7 +42,7 @@ function Dashboard() {
     const fetchApplications = async () => {
         try {
             const res = await axios.get(
-                `http://localhost:5000/api/applications/my/${userId}`
+                `https://smarthire-ai-vm20.onrender.com/api/applications/my/${userId}`
             );
 
             setApplications(
@@ -65,7 +65,7 @@ function Dashboard() {
     const fetchNotifications = async () => {
         try {
             const res = await axios.get(
-                `http://localhost:5000/api/notifications/${userId}`
+                `https://smarthire-ai-vm20.onrender.com/api/notifications/${userId}`
             );
 
             setNotifications(
@@ -86,7 +86,7 @@ function Dashboard() {
     const fetchInterview = async () => {
         try {
             const res = await axios.get(
-                `http://localhost:5000/api/interview/user/${userId}`
+                `https://smarthire-ai-vm20.onrender.com/api/interview/user/${userId}`
             );
 
             const interviews =
@@ -125,7 +125,7 @@ function Dashboard() {
     const startInterview = async () => {
         try {
             const res = await axios.get(
-                `http://localhost:5000/api/interview/user/${userId}`
+                `https://smarthire-ai-vm20.onrender.com/api/interview/user/${userId}`
             );
 
             const interviews =
@@ -168,7 +168,7 @@ function Dashboard() {
 
             const response =
                 await axios.post(
-                    "http://localhost:5000/api/interview/start",
+                    "https://smarthire-ai-vm20.onrender.com/api/interview/start",
                     {
                         userId,
                         jobId
