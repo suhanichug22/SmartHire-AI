@@ -136,17 +136,23 @@ function JobCard({job}){
 
 
 
-            <button
-
-            onClick={applyJob}
-
-            className="mt-6 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg"
-
-            >
-
-                Apply Now
-
-            </button>
+            {job.isExternal && job.redirect_url ? (
+                <a
+                    href={job.redirect_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-6 inline-block bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-6 py-2 rounded-lg text-center"
+                >
+                    Apply on Company Site ↗
+                </a>
+            ) : (
+                <button
+                    onClick={applyJob}
+                    className="mt-6 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold"
+                >
+                    Apply Now
+                </button>
+            )}
 
 
 

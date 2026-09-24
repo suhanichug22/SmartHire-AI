@@ -34,11 +34,21 @@ function Login() {
 
     try {
 //Axios ek HTTP client library hai, jiska use frontend se backend API ko HTTP requests bhejne ke liye kiya hai.
-//Axios ke through backend ke login API ko POST request bheji jaati hai aur formData backend ko send hota hai.     
-const response = await axios.post(
-        "https://smarthire-ai-vm20.onrender.com/api/auth/login",
-        formData
-      );
+      const apiBase = window.location.hostname === "localhost"
+        ? "http://localhost:5000/api"
+        : "https://smarthire-ai-vm20.onrender.com/api";
+
+      let response;
+      try {
+        response = await axios.post(`${apiBase}/auth/login`, formData);
+      } catch (err) {
+        // Only fallback to Render if local server has network error/not reachable
+        if (!err.response && apiBase.includes("localhost")) {
+          response = await axios.post("https://smarthire-ai-vm20.onrender.com/api/auth/login", formData);
+        } else {
+          throw err;
+        }
+      }
 
 
       // Save login information

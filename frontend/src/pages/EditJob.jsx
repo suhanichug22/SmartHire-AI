@@ -20,15 +20,24 @@ function EditJob() {
 
     }, []);
 
+    const apiBase = window.location.hostname === "localhost"
+        ? "http://localhost:5000/api"
+        : "https://smarthire-ai-vm20.onrender.com/api";
+
     const fetchJob = async () => {
 
         try {
 
-            const res = await axios.get(
-
-                `https://smarthire-ai-vm20.onrender.com/api/jobs/${jobId}`
-
-            );
+            let res;
+            try {
+                res = await axios.get(`${apiBase}/jobs/${jobId}`);
+            } catch (err) {
+                if (!err.response && apiBase.includes("localhost")) {
+                    res = await axios.get(`https://smarthire-ai-vm20.onrender.com/api/jobs/${jobId}`);
+                } else {
+                    throw err;
+                }
+            }
 
             const job = res.data;
 
@@ -57,30 +66,31 @@ function EditJob() {
 
         try {
 
-            await axios.put(
+            const payload = {
+                company,
+                title,
+                location,
+                salary,
+                description,
+                skills: skills
+                    .split(",")
+                    .map(skill => skill.trim())
+                    .filter(skill => skill !== "")
+            };
 
-                `https://smarthire-ai-vm20.onrender.com/api/jobs/update/${jobId}`,
-
-                {
-
-                    company,
-                    title,
-                    location,
-                    salary,
-                    description,
-
-                    skills: skills
-                        .split(",")
-                        .map(skill => skill.trim())
-                        .filter(skill => skill !== "")
-
+            try {
+                await axios.put(`${apiBase}/jobs/update/${jobId}`, payload);
+            } catch (err) {
+                if (!err.response && apiBase.includes("localhost")) {
+                    await axios.put(`https://smarthire-ai-vm20.onrender.com/api/jobs/update/${jobId}`, payload);
+                } else {
+                    throw err;
                 }
-
-            );
+            }
 
             alert("Job Updated Successfully ✅");
 
-            navigate("/recruiter-dashboard");
+            navigate("/recruiter-dashboard", { state: { refresh: true, timestamp: Date.now() } });
 
         }
 

@@ -53,11 +53,63 @@ function Jobs() {
 
 
       // Get all jobs
-      const jobsRes = await axios.get(
-        "https://smarthire-ai-vm20.onrender.com/api/jobs"
-      );
+      const apiBase = window.location.hostname === "localhost"
+        ? "http://localhost:5000/api"
+        : "https://smarthire-ai-vm20.onrender.com/api";
 
-      setJobs(jobsRes.data);
+      let jobsRes;
+      try {
+        jobsRes = await axios.get(`${apiBase}/jobs`);
+      } catch (err) {
+        jobsRes = await axios.get("https://smarthire-ai-vm20.onrender.com/api/jobs");
+      }
+
+      let fetchedJobs = Array.isArray(jobsRes.data) ? jobsRes.data : [];
+
+      // If backend hasn't deployed Adzuna yet or returned only local jobs
+      const hasAdzuna = fetchedJobs.some((j) => j.isExternal || j.source === "Adzuna");
+      if (!hasAdzuna) {
+        try {
+          const adzunaRes = await axios.get(
+            "https://api.adzuna.com/v1/api/jobs/in/search/1?app_id=f9715d58&app_key=3996a9b7b3988ea8bc2eb507c70b4a70&results_per_page=30"
+          );
+          if (adzunaRes.data?.results) {
+            const mappedAdzuna = adzunaRes.data.results.map((item) => {
+              const min = item.salary_min;
+              const max = item.salary_max;
+              let sal = "Competitive / Best in Industry";
+              if (min && max && min > 0 && max > 0) {
+                sal = `₹${Math.round(min).toLocaleString("en-IN")} - ₹${Math.round(max).toLocaleString("en-IN")}/yr`;
+              } else if (min && min > 0) {
+                sal = `₹${Math.round(min).toLocaleString("en-IN")}+ /yr`;
+              }
+
+              const cleanDesc = (item.description || "").replace(/<\/?[^>]+(>|$)/g, "").trim();
+              const cleanTitle = (item.title || "").replace(/<\/?[^>]+(>|$)/g, "").trim();
+
+              return {
+                _id: `adzuna_${item.id}`,
+                title: cleanTitle,
+                company: item.company?.display_name || "Top Tech Company",
+                location: item.location?.display_name || "India",
+                salary: sal,
+                description: cleanDesc,
+                skills: [item.category?.label?.replace(" Jobs", "") || "Tech", "Verified"],
+                jobType: item.contract_time === "part_time" ? "Part Time" : "Full Time",
+                status: "Open",
+                isExternal: true,
+                source: "Adzuna",
+                redirect_url: item.redirect_url
+              };
+            });
+            fetchedJobs = [...fetchedJobs, ...mappedAdzuna];
+          }
+        } catch (err) {
+          console.warn("Direct Adzuna fetch fallback error:", err);
+        }
+      }
+
+      setJobs(fetchedJobs);
 
 
       // Only candidate needs applied jobs
@@ -66,7 +118,7 @@ function Jobs() {
         try {
 
           const appliedRes = await axios.get(
-            `https://smarthire-ai-vm20.onrender.com/api/applications/applied/${userId}`
+            `${apiBase}/applications/applied/${userId}`
           );
 
           setAppliedJobIds(
@@ -133,11 +185,29 @@ function Jobs() {
       const userId = user._id || user.id;
 
 
+      const apiBase = window.location.hostname === "localhost"
+        ? "http://localhost:5000/api"
+        : "https://smarthire-ai-vm20.onrender.com/api";
+
+      const targetJob = jobs.find((j) => j._id === jobId);
+
       const res = await axios.post(
-        "https://smarthire-ai-vm20.onrender.com/api/applications/apply",
+        `${apiBase}/applications/apply`,
         {
           userId,
-          jobId
+          jobId,
+          jobData: targetJob ? {
+            title: targetJob.title,
+            company: targetJob.company,
+            location: targetJob.location,
+            salary: targetJob.salary,
+            description: targetJob.description,
+            skills: targetJob.skills,
+            jobType: targetJob.jobType,
+            isExternal: targetJob.isExternal || targetJob.source === "Adzuna" || false,
+            source: targetJob.source || "Adzuna",
+            redirect_url: targetJob.redirect_url || ""
+          } : undefined
         }
       );
 
@@ -631,16 +701,16 @@ function Jobs() {
                   </p>
 
 
-                  {/* STATUS */}
+                  {/* STATUS & BADGES */}
 
-                  <div className="mt-4">
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
 
                     <span
 
-                      className={`px-3 py-1 rounded-full text-sm ${
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
                         job.status === "Closed"
-                          ? "bg-red-600/30 text-red-300"
-                          : "bg-green-600/30 text-green-300"
+                          ? "bg-red-600/30 text-red-300 border border-red-500/30"
+                          : "bg-green-600/30 text-green-300 border border-green-500/30"
                       }`}
 
                     >
@@ -648,6 +718,12 @@ function Jobs() {
                       {job.status || "Open"}
 
                     </span>
+
+                    {job.isExternal && (
+                      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-400/30 flex items-center gap-1">
+                        🌐 Live Adzuna Job
+                      </span>
+                    )}
 
                   </div>
 
@@ -660,7 +736,27 @@ function Jobs() {
 
                     <>
 
-                      {isApplied ? (
+                      {job.isExternal && job.redirect_url ? (
+
+                        <a
+
+                          href={job.redirect_url}
+
+                          target="_blank"
+
+                          rel="noopener noreferrer"
+
+                          className="mt-6 w-full py-3 rounded-xl font-semibold text-center transition bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:opacity-90 shadow-lg shadow-purple-900/30 flex items-center justify-center gap-2 text-white"
+
+                        >
+
+                          <span>Apply on Official Site</span>
+
+                          <span className="text-base">↗</span>
+
+                        </a>
+
+                      ) : isApplied ? (
 
                         <button
 
@@ -713,21 +809,45 @@ function Jobs() {
 
                   {userRole === "recruiter" && (
 
-                    <button
+                    job.isExternal && job.redirect_url ? (
 
-                      onClick={() =>
-                        navigate(
-                          `/recruiter-dashboard`
-                        )
-                      }
+                      <a
 
-                      className="mt-6 w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 hover:opacity-90 font-semibold"
+                        href={job.redirect_url}
 
-                    >
+                        target="_blank"
 
-                      Manage Jobs
+                        rel="noopener noreferrer"
 
-                    </button>
+                        className="mt-6 w-full py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-center font-semibold transition flex items-center justify-center gap-2 text-white"
+
+                      >
+
+                        <span>View External Listing</span>
+
+                        <span>↗</span>
+
+                      </a>
+
+                    ) : (
+
+                      <button
+
+                        onClick={() =>
+                          navigate(
+                            `/recruiter-dashboard`
+                          )
+                        }
+
+                        className="mt-6 w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 hover:opacity-90 font-semibold"
+
+                      >
+
+                        Manage Jobs
+
+                      </button>
+
+                    )
 
                   )}
 

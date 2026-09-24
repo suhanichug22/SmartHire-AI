@@ -41,72 +41,67 @@ const createJob=async(e)=>{
 
 e.preventDefault();
 
-
 try{
 
-
-const user = JSON.parse(
-localStorage.getItem("user")
-);
-
-
+const storedUser = localStorage.getItem("user");
+const user = storedUser ? JSON.parse(storedUser) : null;
 
 if(!user){
 
 alert("Please login first");
-
+navigate("/login");
 return;
 
 }
 
+const recruiterId = user._id || user.id || localStorage.getItem("userId");
 
-
+if(!recruiterId){
+alert("Recruiter ID not found. Please log in again.");
+navigate("/login");
+return;
+}
 
 const data={
 
-company:job.company,
+company:job.company.trim(),
 
-title:job.title,
+title:job.title.trim(),
 
-location:job.location,
+location:job.location.trim(),
 
-salary:job.salary,
+salary:job.salary.trim(),
 
-description:job.description,
+description:job.description.trim(),
 
 skills: job.skills
- ? job.skills.split(",").map(skill=>skill.trim())
+ ? job.skills.split(",").map(skill=>skill.trim()).filter(Boolean)
  : [],
 
-
-recruiterId:user.id
+recruiterId: recruiterId
 
 };
 
+const apiBase = window.location.hostname === "localhost"
+    ? "http://localhost:5000/api"
+    : "https://smarthire-ai-vm20.onrender.com/api";
 
+let res;
+try {
+    res = await axios.post(`${apiBase}/jobs/create`, data);
+} catch (err) {
+    if (!err.response && apiBase.includes("localhost")) {
+        res = await axios.post("https://smarthire-ai-vm20.onrender.com/api/jobs/create", data);
+    } else {
+        throw err;
+    }
+}
 
-
-const res = await axios.post(
-
-"https://smarthire-ai-vm20.onrender.com/api/jobs/create",
-
-data
-
-);
-
-
-
-console.log(res.data);
-
-
+console.log("Job Created:", res.data);
 
 alert("Job Created Successfully 🚀");
 
-
-
-navigate("/recruiter-dashboard");
-
-
+navigate("/recruiter-dashboard", { state: { refresh: true, timestamp: Date.now() } });
 
 }
 

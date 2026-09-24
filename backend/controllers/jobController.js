@@ -1,6 +1,7 @@
 const Job = require("../models/Job");
 const Application = require("../models/Application");
 const User = require("../models/User");
+const { fetchAdzunaJobs } = require("../services/adzunaService");
 
 // ===================================
 // Create Job
@@ -36,24 +37,33 @@ const createJob = async (req, res) => {
 };
 
 // ===================================
-// Get All Jobs
+// Get All Jobs (Local DB + Live Adzuna API)
 // ===================================
 
 const getAllJobs = async (req, res) => {
 
     try {
 
-        const jobs = await Job.find({
+        const { search, location } = req.query;
 
+        // 1. Fetch Local Jobs from MongoDB
+        const localJobs = await Job.find({
             status: "Open"
-
         }).sort({
-
             createdAt: -1
-
         });
 
-        res.status(200).json(jobs);
+        // 2. Fetch Live Real Jobs from Adzuna API
+        const adzunaJobs = await fetchAdzunaJobs({
+            what: search || "",
+            where: location || "",
+            resultsPerPage: 30
+        });
+
+        // 3. Merge: Local recruiter/demo jobs first, followed by live Adzuna jobs
+        const allJobs = [...localJobs, ...adzunaJobs];
+
+        res.status(200).json(allJobs);
 
     }
 
@@ -79,6 +89,19 @@ const getSingleJob = async (req, res) => {
     try {
 
         const { jobId } = req.params;
+
+        if (jobId && jobId.startsWith("adzuna_")) {
+            const externalJob = await Job.findOne({ externalId: jobId });
+            if (externalJob) {
+                return res.status(200).json(externalJob);
+            }
+            return res.status(200).json({
+                _id: jobId,
+                isExternal: true,
+                source: "Adzuna",
+                status: "Open"
+            });
+        }
 
         const job = await Job.findById(jobId);
 
@@ -120,14 +143,17 @@ const getRecruiterJobs = async (req, res) => {
 
         const { recruiterId } = req.params;
 
+        if (!recruiterId) {
+            return res.status(400).json({
+                success: false,
+                message: "Recruiter ID is required"
+            });
+        }
+
         const jobs = await Job.find({
-
             recruiterId
-
         }).sort({
-
             createdAt: -1
-
         });
 
         const updatedJobs = await Promise.all(
@@ -197,10 +223,15 @@ const getDashboardStats = async (req, res) => {
 
         const { recruiterId } = req.params;
 
+        if (!recruiterId) {
+            return res.status(400).json({
+                success: false,
+                message: "Recruiter ID is required"
+            });
+        }
+
         const jobs = await Job.find({
-
             recruiterId
-
         });
 
         const jobIds = jobs.map(job => job._id);
@@ -285,15 +316,21 @@ const matchJobs = async (req, res) => {
             skill.toLowerCase()
         );
 
-        const jobs = await Job.find({
-
+        const localJobs = await Job.find({
             status: "Open"
-
         });
+
+        const adzunaJobs = await fetchAdzunaJobs({
+            resultsPerPage: 25
+        });
+
+        const jobs = [...localJobs, ...adzunaJobs];
 
         const matchedJobs = jobs.map(job => {
 
-            const jobSkills = (job.skills || []).map(skill =>
+            const jobData = job._doc || job;
+
+            const jobSkills = (jobData.skills || []).map(skill =>
                 skill.toLowerCase()
             );
 
@@ -315,7 +352,7 @@ const matchJobs = async (req, res) => {
 
             return {
 
-                ...job._doc,
+                ...jobData,
 
                 matchedSkills,
 

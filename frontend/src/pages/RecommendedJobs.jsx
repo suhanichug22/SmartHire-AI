@@ -42,9 +42,16 @@ function RecommendedJobs() {
                     return;
                 }
 
-                const res = await axios.get(
-                    `https://smarthire-ai-vm20.onrender.com/api/recommendations/${userId}`
-                );
+                const apiBase = window.location.hostname === "localhost"
+                    ? "http://localhost:5000/api"
+                    : "https://smarthire-ai-vm20.onrender.com/api";
+
+                let res;
+                try {
+                    res = await axios.get(`${apiBase}/recommendations/${userId}`);
+                } catch (err) {
+                    res = await axios.get(`https://smarthire-ai-vm20.onrender.com/api/recommendations/${userId}`);
+                }
 
                 console.log(
                     "RECOMMENDATION RESPONSE:",
@@ -91,16 +98,43 @@ function RecommendedJobs() {
 
             const userId = user._id || user.id;
 
-            const res = await axios.post(
+            const apiBase = window.location.hostname === "localhost"
+                ? "http://localhost:5000/api"
+                : "https://smarthire-ai-vm20.onrender.com/api";
 
-                "https://smarthire-ai-vm20.onrender.com/api/applications/apply",
+            const targetJob = jobs.find((j) => j._id === jobId);
 
-                {
-                    userId,
-                    jobId
-                }
-
-            );
+            let res;
+            try {
+                res = await axios.post(
+                    `${apiBase}/applications/apply`,
+                    {
+                        userId,
+                        jobId,
+                        jobData: targetJob ? {
+                            title: targetJob.title,
+                            company: targetJob.company,
+                            location: targetJob.location,
+                            salary: targetJob.salary,
+                            description: targetJob.description,
+                            skills: targetJob.skills,
+                            jobType: targetJob.jobType,
+                            isExternal: targetJob.isExternal || targetJob.source === "Adzuna" || false,
+                            source: targetJob.source || "Adzuna",
+                            redirect_url: targetJob.redirect_url || ""
+                        } : undefined
+                    }
+                );
+            } catch (err) {
+                res = await axios.post(
+                    "https://smarthire-ai-vm20.onrender.com/api/applications/apply",
+                    {
+                        userId,
+                        jobId,
+                        jobData: targetJob
+                    }
+                );
+            }
 
             alert(
                 res.data.message ||

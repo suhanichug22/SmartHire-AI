@@ -2,6 +2,8 @@ const Application = require("../models/Application");
 const Resume = require("../models/Resume");
 const Job = require("../models/Job");
 const Notification = require("../models/Notification");
+const User = require("../models/User");
+const mongoose = require("mongoose");
 
 
 // ======================================================
@@ -14,7 +16,7 @@ const applyJob = async (req, res) => {
 
     try {
 
-        const { userId, jobId } = req.body;
+        const { userId, jobId, jobData } = req.body;
 
         console.log("\n=================================");
         console.log("📩 NEW JOB APPLICATION");
@@ -24,10 +26,42 @@ const applyJob = async (req, res) => {
 
 
         // --------------------------------------------------
-        // Find Job
+        // Find or Create Job (Supports Local & External API Jobs)
         // --------------------------------------------------
 
-        const job = await Job.findById(jobId);
+        let job = null;
+
+        if (mongoose.Types.ObjectId.isValid(jobId)) {
+            job = await Job.findById(jobId);
+        }
+
+        // If not found by ObjectId or is an external ID (e.g. adzuna_...)
+        if (!job && jobId) {
+            job = await Job.findOne({ externalId: jobId.toString() });
+
+            // If job not yet saved in DB and jobData was provided, persist it
+            if (!job && jobData) {
+                job = await Job.create({
+                    company: jobData.company || "External Company",
+                    title: jobData.title || "Software Opportunity",
+                    location: jobData.location || "India",
+                    salary: jobData.salary || "Competitive / Best in Industry",
+                    description: jobData.description || "External Job Opportunity",
+                    skills: Array.isArray(jobData.skills) ? jobData.skills : ["Tech"],
+                    jobType: jobData.jobType || "Full Time",
+                    status: "Open",
+                    isExternal: true,
+                    externalId: jobId.toString(),
+                    source: jobData.source || "Adzuna",
+                    redirect_url: jobData.redirect_url || "",
+                    applicants: 0,
+                    pending: 0,
+                    accepted: 0,
+                    rejected: 0
+                });
+                console.log("✅ External API Job created in DB:", job._id);
+            }
+        }
 
         if (!job) {
 
@@ -50,7 +84,7 @@ const applyJob = async (req, res) => {
 
         const alreadyApplied = await Application.findOne({
             userId,
-            jobId
+            jobId: job._id
         });
 
         if (alreadyApplied) {
@@ -94,7 +128,7 @@ const applyJob = async (req, res) => {
 
             userId: userId,
 
-            jobId: jobId,
+            jobId: job._id,
 
             resume: latestResume.filePath,
 
@@ -115,7 +149,7 @@ const applyJob = async (req, res) => {
 
         await Job.findByIdAndUpdate(
 
-            jobId,
+            job._id,
 
             {
                 $inc: {
@@ -136,45 +170,38 @@ const applyJob = async (req, res) => {
 
         try {
 
-        const recruiterNotification =
-            await Notification.create({
+            if (job.recruiterId) {
+                const recruiterNotification =
+                    await Notification.create({
 
-                userId: job.recruiterId,
+                        userId: job.recruiterId,
 
-                title: "📩 New Job Application",
+                        title: "📩 New Job Application",
 
-                message:
-                    `A candidate has applied for your job "${job.title}".`,
+                        message:
+                            `A candidate has applied for your job "${job.title}".`,
 
-                type: "General",
+                        type: "General",
 
-                isRead: false
+                        isRead: false
 
-            });
+                    });
 
-
-        console.log(
-            "================================="
-        );
-
-        console.log(
-            "✅ RECRUITER NOTIFICATION CREATED"
-        );
-
-        console.log(
-            "Notification ID:",
-            recruiterNotification._id
-        );
-
-        console.log(
-            "Notification User ID:",
-            recruiterNotification.userId
-        );
-
-        console.log(
-            "================================="
-        );
-
+                console.log("✅ RECRUITER NOTIFICATION CREATED:", recruiterNotification._id);
+            } else {
+                // If it's an external API job, notify active recruiters
+                const recruiters = await User.find({ role: "recruiter" });
+                for (const recruiter of recruiters) {
+                    await Notification.create({
+                        userId: recruiter._id,
+                        title: "🌐 New API Job Application",
+                        message: `A candidate has applied for external job "${job.title}" at ${job.company}.`,
+                        type: "General",
+                        isRead: false
+                    });
+                }
+                console.log(`✅ NOTIFIED ${recruiters.length} RECRUITERS ABOUT API JOB APPLICATION`);
+            }
 
         } catch (notificationError) {
 
@@ -287,15 +314,19 @@ const getAppliedJobIds = async (req, res) => {
             await Application.find({
                 userId
             })
-            .select("jobId");
+            .populate("jobId");
 
 
-        const appliedJobIds =
-            applications
-                .filter(app => app.jobId)
-                .map(
-                    app => app.jobId.toString()
-                );
+        const appliedJobIds = [];
+
+        applications.forEach((app) => {
+            if (app.jobId) {
+                appliedJobIds.push(app.jobId._id.toString());
+                if (app.jobId.externalId) {
+                    appliedJobIds.push(app.jobId.externalId);
+                }
+            }
+        });
 
 
         res.status(200).json({

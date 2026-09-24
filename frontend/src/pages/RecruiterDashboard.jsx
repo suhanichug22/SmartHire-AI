@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 
 import {
@@ -17,6 +17,8 @@ function RecruiterDashboard() {
   // ==========================================
   // GET LOGGED-IN RECRUITER
   // ==========================================
+
+  const location = useLocation();
 
   const storedUser = localStorage.getItem("user");
 
@@ -48,6 +50,20 @@ function RecruiterDashboard() {
   });
 
   const [loading, setLoading] = useState(true);
+  const [filterTab, setFilterTab] = useState("all");
+
+  const apiBase = window.location.hostname === "localhost"
+    ? "http://localhost:5000/api"
+    : "https://smarthire-ai-vm20.onrender.com/api";
+
+  const postedCount = jobs.filter((j) => !j.isExternal).length;
+  const externalCount = jobs.filter((j) => j.isExternal).length;
+
+  const displayedJobs = jobs.filter((job) => {
+    if (filterTab === "posted") return !job.isExternal;
+    if (filterTab === "external") return job.isExternal;
+    return true;
+  });
 
 
   // ==========================================
@@ -105,7 +121,7 @@ function RecruiterDashboard() {
 
     fetchStats();
 
-  }, [recruiterId]);
+  }, [recruiterId, location.key, location.state]);
 
 
   // ==========================================
@@ -122,9 +138,16 @@ function RecruiterDashboard() {
       );
 
 
-      const res = await axios.get(
-        `https://smarthire-ai-vm20.onrender.com/api/jobs/recruiter/${recruiterId}`
-      );
+      let res;
+      try {
+        res = await axios.get(
+          `${apiBase}/jobs/recruiter/${recruiterId}`
+        );
+      } catch (e) {
+        res = await axios.get(
+          `https://smarthire-ai-vm20.onrender.com/api/jobs/recruiter/${recruiterId}`
+        );
+      }
 
 
       console.log(
@@ -184,9 +207,16 @@ function RecruiterDashboard() {
       );
 
 
-      const res = await axios.get(
-        `https://smarthire-ai-vm20.onrender.com/api/applications/stats/${recruiterId}`
-      );
+      let res;
+      try {
+        res = await axios.get(
+          `${apiBase}/applications/stats/${recruiterId}`
+        );
+      } catch (e) {
+        res = await axios.get(
+          `https://smarthire-ai-vm20.onrender.com/api/applications/stats/${recruiterId}`
+        );
+      }
 
 
       console.log(
@@ -262,9 +292,15 @@ function RecruiterDashboard() {
       );
 
 
-      await axios.delete(
-        `https://smarthire-ai-vm20.onrender.com/api/jobs/delete/${id}`
-      );
+      try {
+        await axios.delete(
+          `${apiBase}/jobs/delete/${id}`
+        );
+      } catch (e) {
+        await axios.delete(
+          `https://smarthire-ai-vm20.onrender.com/api/jobs/delete/${id}`
+        );
+      }
 
 
       await fetchJobs();
@@ -310,9 +346,15 @@ function RecruiterDashboard() {
       );
 
 
-      await axios.put(
-        `https://smarthire-ai-vm20.onrender.com/api/jobs/toggle-status/${id}`
-      );
+      try {
+        await axios.put(
+          `${apiBase}/jobs/toggle-status/${id}`
+        );
+      } catch (e) {
+        await axios.put(
+          `https://smarthire-ai-vm20.onrender.com/api/jobs/toggle-status/${id}`
+        );
+      }
 
 
       await fetchJobs();
@@ -774,28 +816,22 @@ function RecruiterDashboard() {
 
 
         {/* ==========================================
-            JOB MANAGEMENT HEADER
+            JOB MANAGEMENT HEADER & FILTER TABS
         ========================================== */}
 
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
 
           <div>
 
             <h2 className="text-3xl font-bold">
-
-              Your Jobs 💼
-
+              Jobs Management 💼
             </h2>
 
-
             <p className="text-gray-400 mt-1">
-
-              Manage the jobs posted by you
-
+              Manage your posted jobs and review candidates who applied to live API jobs
             </p>
 
           </div>
-
 
           <Link to="/create-job">
 
@@ -813,43 +849,79 @@ function RecruiterDashboard() {
 
         </div>
 
+        {/* TABS */}
+        <div className="flex flex-wrap gap-3 mb-8">
+          <button
+            onClick={() => setFilterTab("all")}
+            className={`px-5 py-2.5 rounded-xl font-bold text-sm transition ${
+              filterTab === "all"
+                ? "bg-purple-600 text-white shadow-lg shadow-purple-600/30"
+                : "bg-white/10 text-gray-300 hover:bg-white/20"
+            }`}
+          >
+            All Jobs ({jobs.length})
+          </button>
+
+          <button
+            onClick={() => setFilterTab("posted")}
+            className={`px-5 py-2.5 rounded-xl font-bold text-sm transition ${
+              filterTab === "posted"
+                ? "bg-purple-600 text-white shadow-lg shadow-purple-600/30"
+                : "bg-white/10 text-gray-300 hover:bg-white/20"
+            }`}
+          >
+            My Posted Jobs ({postedCount})
+          </button>
+
+          <button
+            onClick={() => setFilterTab("external")}
+            className={`px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2 ${
+              filterTab === "external"
+                ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-pink-600/30"
+                : "bg-white/10 text-gray-300 hover:bg-white/20"
+            }`}
+          >
+            <span>🌐 Applied API Jobs ({externalCount})</span>
+            {externalCount > 0 && (
+              <span className="bg-pink-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                {externalCount}
+              </span>
+            )}
+          </button>
+        </div>
 
 
         {/* ==========================================
             NO JOBS
         ========================================== */}
 
-        {jobs.length === 0 ? (
+        {displayedJobs.length === 0 ? (
 
           <div className="bg-zinc-900 rounded-3xl p-12 text-center">
 
             <h2 className="text-3xl font-bold">
-
-              No Jobs Posted Yet 😔
-
+              {filterTab === "external"
+                ? "No Applied API Jobs Yet 🌐"
+                : filterTab === "posted"
+                ? "No Posted Jobs Yet 😔"
+                : "No Jobs Found 😔"}
             </h2>
 
-
             <p className="text-gray-400 mt-3">
-
-              Start by creating your first job.
-
+              {filterTab === "external"
+                ? "When candidates apply to live API jobs (e.g. from Adzuna), they will automatically appear here."
+                : "Start by creating your first job."}
             </p>
 
-
-            <Link to="/create-job">
-
-              <button
-
-                className="mt-6 bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-xl font-bold"
-
-              >
-
-                Create Job 🚀
-
-              </button>
-
-            </Link>
+            {filterTab !== "external" && (
+              <Link to="/create-job">
+                <button
+                  className="mt-6 bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-xl font-bold"
+                >
+                  Create Job 🚀
+                </button>
+              </Link>
+            )}
 
           </div>
 
@@ -862,7 +934,7 @@ function RecruiterDashboard() {
 
           <div className="grid lg:grid-cols-2 gap-8">
 
-            {jobs.map(
+            {displayedJobs.map(
               (job, index) => (
 
                 <motion.div
@@ -888,8 +960,19 @@ function RecruiterDashboard() {
                 >
 
 
-                  {/* JOB HEADER */}
+                  {/* EXTERNAL API JOB BADGE */}
+                  {job.isExternal && (
+                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                      <span className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1 shadow-sm">
+                        🌐 Live API Job ({job.source || "Adzuna"})
+                      </span>
+                      <span className="bg-pink-600/80 text-white text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                        Candidate Applied
+                      </span>
+                    </div>
+                  )}
 
+                  {/* JOB HEADER */}
                   <div className="flex justify-between items-start gap-4">
 
                     <div>
@@ -1120,66 +1203,48 @@ function RecruiterDashboard() {
                       JOB ACTIONS
                   ========================================== */}
 
-                  <div className="grid grid-cols-3 gap-3 mt-4">
+                  {job.isExternal ? (
+                    <div className="mt-4 pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 text-sm text-gray-400">
+                      <span className="flex items-center gap-1">
+                        ℹ️ External job imported via candidate application
+                      </span>
+                      {job.redirect_url && (
+                        <a
+                          href={job.redirect_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-purple-400 hover:text-purple-300 underline font-medium flex items-center gap-1"
+                        >
+                          Original Source ↗
+                        </a>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-3 mt-4">
+                      {/* EDIT */}
+                      <Link to={`/edit-job/${job._id}`}>
+                        <button className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-bold transition">
+                          ✏️ Edit
+                        </button>
+                      </Link>
 
-
-                    {/* EDIT */}
-
-                    <Link
-                      to={`/edit-job/${job._id}`}
-                    >
-
+                      {/* OPEN / CLOSE */}
                       <button
-
-                        className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-bold transition"
-
+                        onClick={() => toggleStatus(job._id)}
+                        className="bg-yellow-500 hover:bg-yellow-400 text-black py-3 rounded-xl font-bold transition"
                       >
-
-                        ✏️ Edit
-
+                        {job.status === "Closed" ? "🔓 Open" : "🔒 Close"}
                       </button>
 
-                    </Link>
-
-
-
-                    {/* OPEN / CLOSE */}
-
-                    <button
-
-                      onClick={() =>
-                        toggleStatus(job._id)
-                      }
-
-                      className="bg-yellow-500 hover:bg-yellow-400 text-black py-3 rounded-xl font-bold transition"
-
-                    >
-
-                      {job.status === "Closed"
-                        ? "🔓 Open"
-                        : "🔒 Close"}
-
-                    </button>
-
-
-
-                    {/* DELETE */}
-
-                    <button
-
-                      onClick={() =>
-                        deleteJob(job._id)
-                      }
-
-                      className="bg-red-600 hover:bg-red-700 py-3 rounded-xl font-bold transition"
-
-                    >
-
-                      🗑️ Delete
-
-                    </button>
-
-                  </div>
+                      {/* DELETE */}
+                      <button
+                        onClick={() => deleteJob(job._id)}
+                        className="bg-red-600 hover:bg-red-700 py-3 rounded-xl font-bold transition"
+                      >
+                        🗑️ Delete
+                      </button>
+                    </div>
+                  )}
 
                 </motion.div>
 

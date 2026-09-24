@@ -52,6 +52,9 @@ function AIInterview() {
     const [submitting, setSubmitting] =
         useState(false);
 
+    const [mediaNotice, setMediaNotice] =
+        useState("");
+
 
     // ==========================================
     // REFS
@@ -126,59 +129,320 @@ function AIInterview() {
 
 
     // ==========================================
-    // CAMERA + MICROPHONE
+    // CLEANUP MEDIA STREAM ON UNMOUNT
+    // ==========================================
+
+    useEffect(() => {
+
+        return () => {
+
+            if (streamRef.current) {
+
+                streamRef.current
+                    .getTracks()
+                    .forEach((track) => {
+
+                        try {
+
+                            track.stop();
+
+                        } catch (e) {}
+
+                    });
+
+                streamRef.current = null;
+
+            }
+
+        };
+
+    }, []);
+
+
+    // ==========================================
+    // CAMERA + MICROPHONE (FAULT-TOLERANT)
     // ==========================================
 
     const startCamera = async () => {
 
-        try {
+        setMediaNotice("");
 
-            const stream =
-                await navigator.mediaDevices.getUserMedia({
-
-                    video: true,
-
-                    audio: true
-
-                });
-
-
-            // Save stream
-            streamRef.current =
-                stream;
-
-
-            // Camera ON
-            setCameraOn(true);
-
-            // Microphone ON
-            setMicOn(true);
-
-
-            console.log(
-                "✅ Camera + Microphone started"
-            );
-
-
-            return true;
-
-
-        } catch (error) {
-
-            console.log(
-                "❌ Camera/Mic Error:",
-                error
-            );
-
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
 
             alert(
-                "Camera and Microphone permission is required."
+                "Media devices are not supported in this browser. Please use Chrome, Edge, or Firefox."
             );
-
 
             return false;
 
         }
+
+        let combinedStream = new MediaStream();
+        let videoSuccess = false;
+        let audioSuccess = false;
+
+        // --------------------------------------
+        // 1. ATTEMPT CAMERA (VIDEO)
+        // --------------------------------------
+        try {
+
+            const videoStream =
+                await navigator.mediaDevices.getUserMedia({
+
+                    video: {
+
+                        width: { ideal: 640 },
+
+                        height: { ideal: 480 },
+
+                        facingMode: "user"
+
+                    }
+
+                });
+
+            videoStream
+                .getVideoTracks()
+                .forEach((track) =>
+                    combinedStream.addTrack(track)
+                );
+
+            videoSuccess = true;
+
+            setCameraOn(true);
+
+            console.log("✅ Camera started successfully");
+
+        } catch (vErr) {
+
+            console.warn("⚠️ High-res video failed, trying basic video:", vErr);
+
+            try {
+
+                const basicVideoStream =
+                    await navigator.mediaDevices.getUserMedia({
+
+                        video: true
+
+                    });
+
+                basicVideoStream
+                    .getVideoTracks()
+                    .forEach((track) =>
+                        combinedStream.addTrack(track)
+                    );
+
+                videoSuccess = true;
+
+                setCameraOn(true);
+
+                console.log("✅ Basic camera started successfully");
+
+            } catch (err2) {
+
+                console.error("❌ Camera Error:", err2);
+
+                setCameraOn(false);
+
+                if (
+                    err2.name === "NotAllowedError" ||
+                    err2.name === "PermissionDeniedError"
+                ) {
+
+                    alert(
+                        "Camera permission was denied. Please allow camera access in your browser settings (click the lock/camera icon in your address bar)."
+                    );
+
+                    return false;
+
+                } else if (err2.name === "NotReadableError") {
+
+                    alert(
+                        "Camera is already in use by another application (Zoom, Teams, Discord, etc.). Please close other apps and try again."
+                    );
+
+                    return false;
+
+                } else if (
+                    err2.name === "NotFoundError" ||
+                    err2.name === "DevicesNotFoundError"
+                ) {
+
+                    alert(
+                        "No camera device was found. Please connect a webcam to continue."
+                    );
+
+                    return false;
+
+                }
+
+            }
+
+        }
+
+        // --------------------------------------
+        // 2. ATTEMPT MICROPHONE (AUDIO)
+        // Handled separately so NotReadableError doesn't block the interview
+        // --------------------------------------
+        try {
+
+            const audioStream =
+                await navigator.mediaDevices.getUserMedia({
+
+                    audio: {
+
+                        echoCancellation: true,
+
+                        noiseSuppression: true
+
+                    }
+
+                });
+
+            audioStream
+                .getAudioTracks()
+                .forEach((track) =>
+                    combinedStream.addTrack(track)
+                );
+
+            audioSuccess = true;
+
+            setMicOn(true);
+
+            console.log("✅ Microphone started successfully");
+
+        } catch (aErr) {
+
+            // Default audio source busy, try basic audio
+            try {
+
+                const basicAudioStream =
+                    await navigator.mediaDevices.getUserMedia({
+
+                        audio: true
+
+                    });
+
+                basicAudioStream
+                    .getAudioTracks()
+                    .forEach((track) =>
+                        combinedStream.addTrack(track)
+                    );
+
+                audioSuccess = true;
+
+                setMicOn(true);
+
+                console.log("✅ Basic microphone started successfully");
+
+            } catch (err2) {
+
+                // Audio source busy, automatically searching for alternative devices
+                console.log("ℹ️ Default microphone busy, checking alternative audio devices...");
+
+                // Try other audio devices if available
+                let altAudioTrack = null;
+
+                try {
+
+                    const devices =
+                        await navigator.mediaDevices.enumerateDevices();
+
+                    const audioInputs =
+                        devices.filter(
+                            (d) => d.kind === "audioinput" && d.deviceId
+                        );
+
+                    for (const dev of audioInputs) {
+
+                        try {
+
+                            const altStream =
+                                await navigator.mediaDevices.getUserMedia({
+
+                                    audio: {
+                                        deviceId: { exact: dev.deviceId }
+                                    }
+
+                                });
+
+                            if (altStream.getAudioTracks().length > 0) {
+
+                                altAudioTrack =
+                                    altStream.getAudioTracks()[0];
+
+                                break;
+
+                            }
+
+                        } catch (devErr) {
+
+                            // Try next device
+
+                        }
+
+                    }
+
+                } catch (enumErr) {
+
+                    console.warn("Could not enumerate audio devices:", enumErr);
+
+                }
+
+                if (altAudioTrack) {
+
+                    combinedStream.addTrack(altAudioTrack);
+
+                    audioSuccess = true;
+
+                    setMicOn(true);
+
+                    console.log("✅ Alternative microphone started successfully");
+
+                } else {
+
+                    setMicOn(false);
+
+                    setMediaNotice(
+                        "Microphone could not be started (it may be in use by another app like Zoom, Teams, or another browser tab). Proceeding with camera."
+                    );
+
+                    console.log(
+                        "ℹ️ Continuing with camera only as microphone source is unavailable"
+                    );
+
+                }
+
+            }
+
+        }
+
+        // --------------------------------------
+        // 3. EVALUATE STREAM
+        // --------------------------------------
+        if (videoSuccess) {
+
+            streamRef.current =
+                combinedStream;
+
+            return true;
+
+        }
+
+        if (!videoSuccess && !audioSuccess) {
+
+            alert(
+                "Could not access your camera. Please ensure camera permissions are granted and no other application is using it."
+            );
+
+            return false;
+
+        }
+
+        streamRef.current =
+            combinedStream;
+
+        return true;
 
     };
 
@@ -837,6 +1101,17 @@ function AIInterview() {
                     </p>
 
 
+                    {mediaNotice && (
+
+                        <div className="bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 text-sm px-4 py-3 rounded-xl mb-6 text-left">
+
+                            ⚠️ {mediaNotice}
+
+                        </div>
+
+                    )}
+
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
 
 
@@ -986,6 +1261,17 @@ function AIInterview() {
 
 
             <div className="max-w-4xl mx-auto">
+
+
+                {mediaNotice && (
+
+                    <div className="bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 text-sm px-4 py-3 rounded-xl mb-6 text-center">
+
+                        ⚠️ {mediaNotice}
+
+                    </div>
+
+                )}
 
 
                 {/* =================================

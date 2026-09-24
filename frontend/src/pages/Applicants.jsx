@@ -10,6 +10,10 @@ function Applicants() {
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState(null);
 
+  const apiBase = window.location.hostname === "localhost"
+    ? "http://localhost:5000/api"
+    : "https://smarthire-ai-vm20.onrender.com/api";
+
   // ==========================================
   // FETCH APPLICANTS
   // ==========================================
@@ -18,9 +22,12 @@ function Applicants() {
     try {
       setLoading(true);
 
-      const res = await axios.get(
-        `https://smarthire-ai-vm20.onrender.com/api/applications/job/${jobId}`
-      );
+      let res;
+      try {
+        res = await axios.get(`${apiBase}/applications/job/${jobId}`);
+      } catch (err) {
+        res = await axios.get(`https://smarthire-ai-vm20.onrender.com/api/applications/job/${jobId}`);
+      }
 
       console.log("✅ Applicants:", res.data);
 
@@ -55,12 +62,12 @@ function Applicants() {
 
       console.log("Updating:", id, status);
 
-      const res = await axios.put(
-        `https://smarthire-ai-vm20.onrender.com/api/applications/update/${id}`,
-        {
-          status,
-        }
-      );
+      let res;
+      try {
+        res = await axios.put(`${apiBase}/applications/update/${id}`, { status });
+      } catch (err) {
+        res = await axios.put(`https://smarthire-ai-vm20.onrender.com/api/applications/update/${id}`, { status });
+      }
 
       console.log("✅ Status Updated:", res.data);
 
@@ -238,7 +245,11 @@ function Applicants() {
 
                 {app.resume && (
                   <a
-                    href={`https://smarthire-ai-vm20.onrender.com/${app.resume}`}
+                    href={
+                      app.resume.startsWith("http")
+                        ? app.resume
+                        : `${window.location.hostname === "localhost" ? "http://localhost:5000" : "https://smarthire-ai-vm20.onrender.com"}/${app.resume}`
+                    }
                     target="_blank"
                     rel="noreferrer"
                     className="block mt-6 text-purple-400 hover:text-purple-300 underline"

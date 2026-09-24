@@ -36,7 +36,7 @@ const jobSchema = new mongoose.Schema({
     recruiterId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        required: true
+        required: false
     },
 
     // New Fields
@@ -45,6 +45,26 @@ const jobSchema = new mongoose.Schema({
         type: String,
         enum: ["Open", "Closed"],
         default: "Open"
+    },
+
+    isExternal: {
+        type: Boolean,
+        default: false
+    },
+
+    externalId: {
+        type: String,
+        sparse: true,
+        index: true
+    },
+
+    source: {
+        type: String,
+        default: "SmartHire"
+    },
+
+    redirect_url: {
+        type: String
     },
 
     applicants: {
