@@ -110,61 +110,6 @@ function Notifications() {
     // Loading
     // ==========================================
 
-    if (loading) {
-
-        return (
-
-            <div className="min-h-screen bg-black text-white flex items-center justify-center">
-
-                <div className="text-center">
-
-                    <div className="text-5xl mb-4">
-                        🔔
-                    </div>
-
-                    <h1 className="text-2xl font-semibold">
-                        Loading Notifications...
-                    </h1>
-
-                </div>
-
-            </div>
-
-        );
-
-    }
-
-
-    // ==========================================
-    // User Not Logged In
-    // ==========================================
-
-    if (!userId) {
-
-        return (
-
-            <div className="min-h-screen bg-black text-white flex items-center justify-center">
-
-                <div className="text-center">
-
-                    <div className="text-5xl mb-4">
-                        🔐
-                    </div>
-
-                    <h1 className="text-2xl font-semibold">
-                        Please login first
-                    </h1>
-
-                </div>
-
-            </div>
-
-        );
-
-    }
-
-
-    // ==========================================
     // UI
     // ==========================================
 
@@ -207,7 +152,13 @@ function Notifications() {
 
                 {/* No Notifications */}
 
-                {notifications.length === 0 ? (
+                {loading ? (
+
+                    <div className="bg-zinc-900 border border-white/10 rounded-2xl p-12 text-center text-gray-400" role="status">
+                        Loading notifications...
+                    </div>
+
+                ) : notifications.length === 0 ? (
 
                     <motion.div
                         initial={{

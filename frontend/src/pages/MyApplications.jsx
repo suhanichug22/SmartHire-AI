@@ -117,26 +117,6 @@ function MyApplications() {
     // Loading
     // ==========================================
 
-    if (loading) {
-
-        return (
-
-            <div className="min-h-screen bg-black text-white flex items-center justify-center">
-
-                <h1 className="text-3xl font-bold animate-pulse">
-
-                    Loading applications...
-
-                </h1>
-
-            </div>
-
-        );
-
-    }
-
-
-    // ==========================================
     // UI
     // ==========================================
 
@@ -180,7 +160,13 @@ function MyApplications() {
 
             {/* No Applications */}
 
-            {applications.length === 0 ? (
+            {loading ? (
+
+                <div className="text-center py-20 bg-white/[0.04] border border-white/10 rounded-2xl text-gray-400" role="status">
+                    Loading your applications...
+                </div>
+
+            ) : applications.length === 0 ? (
 
                 <div className="text-center py-20 bg-white/[0.04] border border-white/10 rounded-2xl">
 

@@ -163,25 +163,6 @@ function RecommendedJobs() {
     // LOADING
     // =====================================
 
-    if (loading) {
-
-        return (
-
-            <div className="min-h-screen bg-black text-white flex items-center justify-center">
-
-                <h1 className="text-3xl animate-pulse">
-
-                    🤖 Finding Best Jobs...
-
-                </h1>
-
-            </div>
-
-        );
-
-    }
-
-
     // =====================================
     // UI
     // =====================================
@@ -227,7 +208,7 @@ function RecommendedJobs() {
                 </motion.div>
 
 
-                {jobs.length === 0 ? (
+                {loading ? (<div className="bg-zinc-900 rounded-3xl p-12 text-center text-gray-400" role="status">Finding jobs matched to your profile...</div>) : jobs.length === 0 ? (
 
                     <div className="bg-zinc-900 rounded-3xl p-12 text-center">
 

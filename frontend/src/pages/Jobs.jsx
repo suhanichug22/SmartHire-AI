@@ -318,26 +318,6 @@ function Jobs() {
   // LOADING
   // ==========================================
 
-  if (loading) {
-
-    return (
-
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-
-        <h1 className="text-3xl animate-pulse">
-
-          Loading available jobs...
-
-        </h1>
-
-      </div>
-
-    );
-
-  }
-
-
-  // ==========================================
   // UI
   // ==========================================
 
@@ -564,7 +544,13 @@ function Jobs() {
             NO JOBS
         ========================================== */}
 
-        {filteredJobs.length === 0 ? (
+        {loading ? (
+
+          <div className="text-center py-20 bg-white/5 rounded-3xl text-gray-400" role="status">
+            Loading available jobs...
+          </div>
+
+        ) : filteredJobs.length === 0 ? (
 
           <div className="text-center py-20 bg-white/5 rounded-3xl">
 

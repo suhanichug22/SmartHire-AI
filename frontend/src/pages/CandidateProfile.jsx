@@ -195,36 +195,9 @@ function CandidateProfile() {
   // LOADING
   // ==========================================
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <h1 className="text-3xl animate-pulse">
-          Loading Profile 👤
-        </h1>
-      </div>
-    );
-  }
-
   // ==========================================
   // PROFILE NOT FOUND
   // ==========================================
-
-  if (!profile) {
-    return (
-      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center gap-5">
-        <h1 className="text-2xl">
-          Unable to load profile ❌
-        </h1>
-
-        <button
-          onClick={fetchProfile}
-          className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-xl font-bold"
-        >
-          Try Again 🔄
-        </button>
-      </div>
-    );
-  }
 
   // ==========================================
   // PAGE
@@ -257,6 +230,16 @@ function CandidateProfile() {
             <p className="text-gray-400 mt-2">
               Manage your SmartHire-AI profile
             </p>
+            {loading && (
+              <p className="text-purple-300 mt-2" role="status">
+                Loading your saved profile...
+              </p>
+            )}
+            {!loading && !profile && (
+              <button onClick={fetchProfile} className="text-purple-300 hover:text-purple-200 mt-2">
+                Unable to load saved profile. Try again.
+              </button>
+            )}
           </div>
 
           {!editing ? (
@@ -302,11 +285,11 @@ function CandidateProfile() {
           </h2>
 
           <p className="text-xl">
-            👤 {profile.name || "Candidate"}
+            👤 {profile?.name || "Candidate"}
           </p>
 
           <p className="text-gray-400 mt-2">
-            📧 {profile.email || "No email"}
+            📧 {profile?.email || "No email"}
           </p>
 
         </div>
@@ -445,7 +428,7 @@ function CandidateProfile() {
 
         {/* SKILL PREVIEW */}
 
-        {profile.skills?.length > 0 && !editing && (
+        {profile?.skills?.length > 0 && !editing && (
 
           <div className="mt-8">
 

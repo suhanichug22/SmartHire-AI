@@ -1,9 +1,17 @@
+//Backend mein ye data kahan milega?
+//Tumhare authController.js mein:
+
+
+
+// Login.jsx user ka email aur password state mein store karta hai. On form submission, Axios POST request ke through credentials backend ke /api/auth/login endpoint par bheje jaate hain. Backend user ko MongoDB se find karke bcrypt se password verify karta hai. Successful login par JWT token aur user information frontend ko milti hai, jise localStorage mein store kiya jata hai. Finally, user ke role ke
+// according recruiter ya candidate dashboard par navigate kiya jata hai.”
+
+
+
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; //JavaScript ke through page change karne ke liye.
 import axios from "axios";
-
 function Login() {
-
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -15,7 +23,7 @@ function Login() {
   const [loading, setLoading] = useState(false);
 
 
-  const handleChange = (e) => {
+  const handleChange = (e) => {  //Jab user input box mein kuch type karta hai, ye function run hota hai.
 
     setFormData({
       ...formData,  //preserve old values 

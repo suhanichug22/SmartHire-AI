@@ -241,18 +241,6 @@ function Dashboard() {
         ).length;
 
     // ==========================================
-    // LOADING
-    // ==========================================
-
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-black text-white flex items-center justify-center text-3xl">
-                Loading Dashboard...
-            </div>
-        );
-    }
-
-    // ==========================================
     // DASHBOARD
     // ==========================================
 
@@ -656,7 +644,13 @@ function Dashboard() {
 
                     </div>
 
-                    {applications.length === 0 ? (
+                    {loading ? (
+
+                        <div className="text-center py-10 text-gray-400">
+                            Loading your recent applications...
+                        </div>
+
+                    ) : applications.length === 0 ? (
 
                         <div className="text-center py-10">
 
